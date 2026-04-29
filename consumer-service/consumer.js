@@ -82,10 +82,12 @@ async function getAllUsers() {
       console.log('🔑 Found key:', key);
       const userId = key.split(':')[1];
       const points = await getUserPoints(userId);
+      const name = await redisClient.get(`user:${userId}:name`) || userId;
       const history = await getUserHistory(userId);
-      console.log(`👤 User ${userId}: ${points} points, ${history.length} transactions`);
+      console.log(`👤 User ${userId} (${name}): ${points} points, ${history.length} transactions`);
       users.push({
         userId,
+        name,
         points,
         transactionCount: history.length
       });
@@ -201,10 +203,14 @@ app.get('/api/users', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { userId, initialPoints } = req.body;
+    const { userId, name, initialPoints } = req.body;
     
     if (!userId || typeof userId !== 'string') {
       return res.status(400).json({ error: 'userId is required and must be a string' });
+    }
+    
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'name is required and must be a string' });
     }
     
     // Check if user already exists
@@ -213,18 +219,20 @@ app.post('/api/users', async (req, res) => {
       return res.status(409).json({ error: 'User already exists', userId });
     }
     
-    // Create user with initial points (default 0)
+    // Create user with initial points (default 0) and name
     const points = typeof initialPoints === 'number' ? initialPoints : 0;
     await redisClient.set(`user:${userId}:points`, points);
+    await redisClient.set(`user:${userId}:name`, name);
     await redisClient.sAdd('users', userId);
     
-    console.log(`✅ Created user: ${userId} with ${points} points`);
+    console.log(`✅ Created user: ${userId} (${name}) with ${points} points`);
     
     res.json({
       success: true,
       userId,
+      name,
       points,
-      message: `User ${userId} created successfully`
+      message: `User ${name} created successfully`
     });
   } catch (error) {
     console.error('❌ Error creating user:', error);
@@ -244,9 +252,11 @@ app.get('/api/users/:userId', async (req, res) => {
       }
     }
     
+    const name = await redisClient.get(`user:${userId}:name`) || userId;
     const history = await getUserHistory(userId);
     res.json({
       userId,
+      name,
       points,
       transactionCount: history.length,
       history: history.reverse()
