@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinema Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .back-button {
+            display: inline-block;
+            background: white;
+            color: #f5576c;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+
+        .cinemas-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .cinema-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .cinema-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f093fb;
+        }
+
+        .cinema-icon {
+            font-size: 3em;
+            margin-right: 15px;
+        }
+
+        .cinema-info h2 {
+            color: #f5576c;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .cinema-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online .status-dot {
+            background: #28a745;
+        }
+
+        .status-offline .status-dot {
+            background: #dc3545;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.online {
+            background: #28a745;
+            color: white;
+        }
+
+        .toggle-btn.offline {
+            background: #dc3545;
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .offline-queue {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .offline-queue.show {
+            display: block;
+        }
+
+        .offline-queue h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .queue-count {
+            background: #ffc107;
+            color: #856404;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+
+        .sync-btn {
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .sync-btn:hover {
+            background: #e0a800;
+            transform: scale(1.05);
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cinema-card.offline {
+            border: 3px solid #dc3545;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #f093fb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .transaction-history {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f093fb;
+        }
+
+        .transaction-history h3 {
+            color: #f5576c;
+            margin-bottom: 15px;
+        }
+
+        .transaction-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-item .time {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .transaction-item .amount {
+            font-weight: bold;
+            color: #f5576c;
+        }
+
+        @media (max-width: 768px) {
+            .cinemas-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← Back to Home</a>
+        
+        <div class="header">
+            <h1>🎭 Cinema Transaction Simulator</h1>
+            <p>Simulate customer transactions for different cinemas</p>
+        </div>
+
+        <div class="cinemas-container">
+            <!-- Cinema 1 -->
+            <div class="cinema-card">
+                <div class="cinema-header">
+                    <div class="cinema-icon">🎬</div>
+                    <div class="cinema-info">
+                        <h2>Cinema Artimondo</h2>
+                        <p>Location: Milan, Italy</p>
+                    </div>
+                </div>
+
+                <div class="status-toggle">
+                    <div class="status-indicator status-online" id="cinema1-status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Online</span>
+                    </div>
+                    <button class="toggle-btn online" id="cinema1-toggle" onclick="toggleStatus('cinema1')">
+                        Go Offline
+                    </button>
+                </div>
+
+                <div class="offline-queue" id="cinema1-queue">
+                    <h4>
+                        📦 Offline Queue
+                        <span class="queue-count" id="cinema1-queue-count">0</span>
+                    </h4>
+                    <p style="color: #856404; font-size: 0.9em; margin-bottom: 10px;">
+                        Transactions will be queued and synced when back online
+                    </p>
+                    <button class="sync-btn" id="cinema1-sync" onclick="syncQueue('cinema1')" disabled>
+                        Sync Now
+                    </button>
+                </div>
+
+                <form id="cinema1-form">
+                    <div class="form-group">
+                        <label for="cinema1-customer">Customer ID</label>
+                        <input type="text" id="cinema1-customer" placeholder="Search or create user..." required autocomplete="off" list="cinema1-users">
+                        <datalist id="cinema1-users"></datalist>
+                        <div id="cinema1-user-info" style="margin-top: 8px; padding: 8px; background: #e3f2fd; border-radius: 5px; display: none;">
+                            <small><strong>Current Balance:</strong> <span id="cinema1-balance">0</span> points</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cinema1-type">Transaction Type</label>
+                        <select id="cinema1-type" required>
+                            <option value="">Select type...</option>
+                            <option value="add">Add Points</option>
+                            <option value="remove">Remove Points</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cinema1-amount">Points</label>
+                        <input type="number" id="cinema1-amount" placeholder="Enter points" step="1" min="1" required>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Submit Transaction</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm('cinema1')">Clear</button>
+                    </div>
+
+                    <div id="cinema1-status" class="status-message"></div>
+                </form>
+
+                <div class="transaction-history">
+                    <h3>Recent Transactions</h3>
+                    <div id="cinema1-history"></div>
+                </div>
+            </div>
+
+            <!-- Cinema 2 -->
+            <div class="cinema-card">
+                <div class="cinema-header">
+                    <div class="cinema-icon">🎪</div>
+                    <div class="cinema-info">
+                        <h2>Cinema Paradiso</h2>
+                        <p>Location: Rome, Italy</p>
+                    </div>
+                </div>
+
+                <div class="status-toggle">
+                    <div class="status-indicator status-online" id="cinema2-status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Online</span>
+                    </div>
+                    <button class="toggle-btn online" id="cinema2-toggle" onclick="toggleStatus('cinema2')">
+                        Go Offline
+                    </button>
+                </div>
+
+                <div class="offline-queue" id="cinema2-queue">
+                    <h4>
+                        📦 Offline Queue
+                        <span class="queue-count" id="cinema2-queue-count">0</span>
+                    </h4>
+                    <p style="color: #856404; font-size: 0.9em; margin-bottom: 10px;">
+                        Transactions will be queued and synced when back online
+                    </p>
+                    <button class="sync-btn" id="cinema2-sync" onclick="syncQueue('cinema2')" disabled>
+                        Sync Now
+                    </button>
+                </div>
+
+                <form id="cinema2-form">
+                    <div class="form-group">
+                        <label for="cinema2-customer">Customer ID</label>
+                        <input type="text" id="cinema2-customer" placeholder="Search or create user..." required autocomplete="off" list="cinema2-users">
+                        <datalist id="cinema2-users"></datalist>
+                        <div id="cinema2-user-info" style="margin-top: 8px; padding: 8px; background: #e3f2fd; border-radius: 5px; display: none;">
+                            <small><strong>Current Balance:</strong> <span id="cinema2-balance">0</span> points</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cinema2-type">Transaction Type</label>
+                        <select id="cinema2-type" required>
+                            <option value="">Select type...</option>
+                            <option value="add">Add Points</option>
+                            <option value="remove">Remove Points</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cinema2-amount">Points</label>
+                        <input type="number" id="cinema2-amount" placeholder="Enter points" step="1" min="1" required>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Submit Transaction</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm('cinema2')">Clear</button>
+                    </div>
+
+                    <div id="cinema2-status" class="status-message"></div>
+                </form>
+
+                <div class="transaction-history">
+                    <h3>Recent Transactions</h3>
+                    <div id="cinema2-history"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api/backend';
+        
+        // Track offline status and queues for each cinema
+        const cinemaState = {
+            cinema1: { isOnline: true, queue: [] },
+            cinema2: { isOnline: true, queue: [] }
+        };
+
+        // User database in localStorage
+        class UserDatabase {
+            constructor() {
+                this.storageKey = 'cinema_users_db';
+                this.loadUsers();
+            }
+
+            loadUsers() {
+                const data = localStorage.getItem(this.storageKey);
+                this.users = data ? JSON.parse(data) : {};
+            }
+
+            saveUsers() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.users));
+            }
+
+            getUser(userId) {
+                return this.users[userId] || null;
+            }
+
+            createUser(userId) {
+                if (!this.users[userId]) {
+                    this.users[userId] = {
+                        userId: userId,
+                        balance: 0,
+                        transactions: [],
+                        createdAt: new Date().toISOString()
+                    };
+                    this.saveUsers();
+                }
+                return this.users[userId];
+            }
+
+            updateBalance(userId, points, type, cinema) {
+                const user = this.getUser(userId);
+                if (!user) {
+                    throw new Error(`User "${userId}" not found. Please create the user first in User Management.`);
+                }
+                const oldBalance = user.balance;
+                
+                if (type === 'add') {
+                    user.balance += points;
+                } else if (type === 'remove') {
+                    user.balance = Math.max(0, user.balance - points);
+                }
+
+                user.transactions.push({
+                    type: type,
+                    points: points,
+                    oldBalance: oldBalance,
+                    newBalance: user.balance,
+                    cinema: cinema,
+                    timestamp: new Date().toISOString()
+                });
+
+                this.saveUsers();
+                return user;
+            }
+
+            getAllUsers() {
+                return Object.values(this.users);
+            }
+
+            searchUsers(query) {
+                if (!query) return this.getAllUsers();
+                const lowerQuery = query.toLowerCase();
+                return this.getAllUsers().filter(user => 
+                    user.userId.toLowerCase().includes(lowerQuery)
+                );
+            }
+        }
+
+        const userDB = new UserDatabase();
+
+        // Update user suggestions when typing
+        function updateUserSuggestions(cinema) {
+            const input = document.getElementById(`${cinema}-customer`);
+            const datalist = document.getElementById(`${cinema}-users`);
+            const query = input.value;
+
+            const users = userDB.searchUsers(query);
+            datalist.innerHTML = users.map(user => 
+                `<option value="${user.userId}">Balance: ${user.balance} points</option>`
+            ).join('');
+        }
+
+        // Show user balance when selected
+        function showUserBalance(cinema) {
+            const input = document.getElementById(`${cinema}-customer`);
+            const userId = input.value.trim();
+            const infoDiv = document.getElementById(`${cinema}-user-info`);
+            const balanceSpan = document.getElementById(`${cinema}-balance`);
+
+            if (userId) {
+                const user = userDB.getUser(userId);
+                if (user) {
+                    balanceSpan.textContent = user.balance;
+                    infoDiv.style.display = 'block';
+                } else {
+                    infoDiv.style.display = 'none';
+                }
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        }
+
+        // Setup event listeners for user inputs
+        ['cinema1', 'cinema2'].forEach(cinema => {
+            const input = document.getElementById(`${cinema}-customer`);
+            input.addEventListener('input', () => {
+                updateUserSuggestions(cinema);
+                showUserBalance(cinema);
+            });
+            input.addEventListener('blur', () => {
+                setTimeout(() => showUserBalance(cinema), 200);
+            });
+        });
+
+        // Clear local storage only (no Redis reset from simulator)
+        function resetDatabase() {
+            if (confirm('⚠️ Are you sure you want to clear local storage?\n\nThis will delete local user data from this browser only.\n\nTo reset the Redis database, use the Dashboard.')) {
+                localStorage.removeItem('cinema_users_db');
+                userDB.loadUsers();
+                
+                // Clear all user info displays
+                ['cinema1', 'cinema2'].forEach(cinema => {
+                    document.getElementById(`${cinema}-user-info`).style.display = 'none';
+                    document.getElementById(`${cinema}-customer`).value = '';
+                    document.getElementById(`${cinema}-users`).innerHTML = '';
+                    document.getElementById(`${cinema}-history`).innerHTML = '';
+                });
+                
+                alert('✅ Local storage cleared successfully!\n\nUser data in this browser has been deleted.\n\nRedis database remains unchanged.');
+            }
+        }
+
+        async function toggleStatus(cinema) {
+            const state = cinemaState[cinema];
+            const cinemaName = cinema === 'cinema1' ? 'Cinema Artimondo' : 'Cinema Paradiso';
+            
+            state.isOnline = !state.isOnline;
+            
+            const indicator = document.getElementById(`${cinema}-status-indicator`);
+            const toggleBtn = document.getElementById(`${cinema}-toggle`);
+            const queueDiv = document.getElementById(`${cinema}-queue`);
+            const syncBtn = document.getElementById(`${cinema}-sync`);
+            const card = document.querySelector(`#${cinema}-form`).closest('.cinema-card');
+            
+            try {
+                // Send status update to backend
+                const statusResponse = await fetch(`${API_BASE_URL}/api/cinema-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cinema: cinemaName,
+                        status: state.isOnline ? 'online' : 'offline'
+                    })
+                });
+                
+                if (!statusResponse.ok) {
+                    throw new Error('Failed to update cinema status');
+                }
+                
+                console.log(`📡 Cinema status updated: ${cinemaName} → ${state.isOnline ? 'online' : 'offline'}`);
+            } catch (error) {
+                console.error('Error updating cinema status:', error);
+            }
+            
+            if (state.isOnline) {
+                // Going online
+                indicator.className = 'status-indicator status-online';
+                indicator.innerHTML = '<span class="status-dot"></span><span>Online</span>';
+                toggleBtn.className = 'toggle-btn online';
+                toggleBtn.textContent = 'Go Offline';
+                queueDiv.classList.remove('show');
+                card.classList.remove('offline');
+                syncBtn.disabled = true;
+                
+                // Auto-sync queue if there are items
+                console.log(`[${cinema}] Going online. Queue length: ${state.queue.length}`);
+                if (state.queue.length > 0) {
+                    console.log(`[${cinema}] Auto-syncing ${state.queue.length} queued transactions...`);
+                    setTimeout(() => syncQueue(cinema), 500);
+                } else {
+                    console.log(`[${cinema}] No transactions to sync`);
+                }
+            } else {
+                // Going offline
+                indicator.className = 'status-indicator status-offline';
+                indicator.innerHTML = '<span class="status-dot"></span><span>Offline</span>';
+                toggleBtn.className = 'toggle-btn offline';
+                toggleBtn.textContent = 'Go Online';
+                queueDiv.classList.add('show');
+                card.classList.add('offline');
+                syncBtn.disabled = false;
+                showStatus(cinema, '⚠️ Cinema is now OFFLINE. Infrastructure failure simulated.', false);
+            }
+        }
+
+        function updateQueueCount(cinema) {
+            const count = cinemaState[cinema].queue.length;
+            document.getElementById(`${cinema}-queue-count`).textContent = count;
+        }
+
+        async function syncQueue(cinema) {
+            const state = cinemaState[cinema];
+            if (state.queue.length === 0) {
+                showStatus(cinema, 'No transactions to sync.', true);
+                return;
+            }
+
+            const syncBtn = document.getElementById(`${cinema}-sync`);
+            syncBtn.disabled = true;
+            syncBtn.textContent = 'Syncing...';
+
+            try {
+                showStatus(cinema, `Syncing ${state.queue.length} queued transactions...`, true);
+                
+                // Send each queued transaction to backend API
+                for (let i = 0; i < state.queue.length; i++) {
+                    const transaction = state.queue[i];
+                    
+                    // Send to backend API (which sends to Kafka)
+                    const response = await fetch(`${API_BASE_URL}/api/points`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userId: transaction.customerId,
+                            points: transaction.points,
+                            action: transaction.type,
+                            cinema: transaction.cinema,
+                            source: 'synced'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to sync transaction ${i + 1}`);
+                    }
+                    
+                    // Update user balance in local database
+                    userDB.updateBalance(transaction.customerId, transaction.points, transaction.type, transaction.cinema);
+                    
+                    console.log('Synced transaction:', transaction);
+                    addTransactionToHistory(cinema, transaction.type, transaction.points, true);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                showStatus(cinema, `✅ Successfully synced ${state.queue.length} transactions to server!`, true);
+                state.queue = [];
+                updateQueueCount(cinema);
+                
+                // Update balance display if same user is selected
+                showUserBalance(cinema);
+                
+            } catch (error) {
+                console.error('Sync error:', error);
+                showStatus(cinema, '❌ Sync failed. Will retry later.', false);
+            } finally {
+                syncBtn.disabled = state.queue.length === 0;
+                syncBtn.textContent = 'Sync Now';
+            }
+        }
+
+        function clearForm(cinema) {
+            document.getElementById(`${cinema}-form`).reset();
+            hideStatus(cinema);
+        }
+
+        function showStatus(cinema, message, isSuccess) {
+            const statusEl = document.getElementById(`${cinema}-status`);
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${isSuccess ? 'status-success' : 'status-error'}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideStatus(cinema) {
+            const statusEl = document.getElementById(`${cinema}-status`);
+            statusEl.style.display = 'none';
+        }
+
+        function addTransactionToHistory(cinema, type, points, isSynced = false) {
+            const historyEl = document.getElementById(`${cinema}-history`);
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            const typeLabel = type === 'add' ? 'Add Points' : 'Remove Points';
+            const pointsDisplay = type === 'add' ? `+${points}` : `-${points}`;
+            const pointsColor = type === 'add' ? '#28a745' : '#dc3545';
+            
+            const transactionEl = document.createElement('div');
+            transactionEl.className = 'transaction-item';
+            transactionEl.innerHTML = `
+                <div>
+                    <strong>${typeLabel}</strong> ${isSynced ? '<span style="color: #ffc107;">📤 Synced</span>' : ''}
+                    <div class="time">${timeStr}</div>
+                </div>
+                <div class="amount" style="color: ${pointsColor};">${pointsDisplay} pts</div>
+            `;
+            
+            historyEl.insertBefore(transactionEl, historyEl.firstChild);
+            
+            // Keep only last 5 transactions
+            while (historyEl.children.length > 5) {
+                historyEl.removeChild(historyEl.lastChild);
+            }
+        }
+
+        async function submitTransaction(cinema, cinemaName) {
+            const form = document.getElementById(`${cinema}-form`);
+            const customerId = document.getElementById(`${cinema}-customer`).value.trim();
+            const type = document.getElementById(`${cinema}-type`).value;
+            const points = parseInt(document.getElementById(`${cinema}-amount`).value);
+
+            if (!customerId) {
+                showStatus(cinema, '❌ Please enter a customer ID', false);
+                return;
+            }
+
+            // Check if user exists
+            const user = userDB.getUser(customerId);
+            if (!user) {
+                showStatus(cinema, `❌ User "${customerId}" not found. Please create the user first in User Management.`, false);
+                return;
+            }
+            
+            // Check if removing more points than available
+            if (type === 'remove' && user.balance < points) {
+                showStatus(cinema, `❌ Insufficient balance! User has only ${user.balance} points.`, false);
+                return;
+            }
+
+            const transactionData = {
+                cinema: cinemaName,
+                customerId: customerId,
+                type: type,
+                points: points,
+                timestamp: new Date().toISOString()
+            };
+
+            const state = cinemaState[cinema];
+
+            // Check if cinema is offline
+            if (!state.isOnline) {
+                // Add to queue
+                state.queue.push(transactionData);
+                updateQueueCount(cinema);
+                showStatus(cinema, `📦 Transaction queued (${state.queue.length} in queue). Will sync when online.`, true);
+                addTransactionToHistory(cinema, type, points);
+                setTimeout(() => clearForm(cinema), 2000);
+                return;
+            }
+
+            try {
+                // Send to backend API (which sends to Kafka)
+                const response = await fetch(`${API_BASE_URL}/api/points`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: customerId,
+                        points: points,
+                        action: type,
+                        cinema: cinemaName,
+                        source: 'online'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Transaction failed');
+                }
+
+                const result = await response.json();
+                
+                // Update user balance in local database for UI display
+                const updatedUser = userDB.updateBalance(customerId, points, type, cinemaName);
+                
+                // Success message
+                const action = type === 'add' ? 'added' : 'removed';
+                showStatus(cinema, `✅ ${points} points ${action}! Event ID: ${result.eventId.substring(0, 8)}...`, true);
+                addTransactionToHistory(cinema, type, points, false);
+                
+                // Update balance display
+                showUserBalance(cinema);
+                
+                // Clear form after successful submission
+                setTimeout(() => clearForm(cinema), 2000);
+                
+                // In production, uncomment this:
+                /*
+                const response = await fetch(`${API_BASE_URL}/transactions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Transaction failed');
+                }
+
+                const result = await response.json();
+                showStatus(cinema, `Transaction successful! Points ${type === 'redeem' ? 'redeemed' : 'earned'}.`, true);
+                addTransactionToHistory(cinema, type, amount);
+                setTimeout(() => clearForm(cinema), 2000);
+                */
+            } catch (error) {
+                console.error('Transaction error:', error);
+                showStatus(cinema, 'Transaction failed. Please try again.', false);
+            }
+        }
+
+        // Form submission handlers
+        document.getElementById('cinema1-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitTransaction('cinema1', 'Cinema Artimondo');
+        });
+
+        document.getElementById('cinema2-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitTransaction('cinema2', 'Cinema Paradiso');
+        });
+    </script>
+</body>
+</html>

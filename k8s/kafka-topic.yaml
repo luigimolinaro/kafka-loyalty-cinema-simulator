@@ -1,0 +1,15 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: points-events
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-cluster
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 86400000  # 24 hours
+    segment.bytes: 536870912  # 512MB
+    compression.type: producer
+    max.message.bytes: 1048576  # 1MB

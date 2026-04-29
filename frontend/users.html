@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Cinema Points System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👥 User Management</h1>
+            <p>Create and manage cinema loyalty program users</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="/dashboard.html">📊 Dashboard</a>
+            <a href="/simulate.html">🎬 Simulator</a>
+            <a href="/users.html">👥 Users</a>
+        </div>
+
+        <div class="card">
+            <h2>➕ Create New User</h2>
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="userId">User ID *</label>
+                    <input type="text" id="userId" name="userId" placeholder="e.g., mario, luigi, peach" required>
+                </div>
+                <div class="form-group">
+                    <label for="initialPoints">Initial Points (optional)</label>
+                    <input type="number" id="initialPoints" name="initialPoints" placeholder="0" min="0">
+                </div>
+                <button type="submit" class="btn" id="createBtn">Create User</button>
+                <div id="createStatus" class="status-message"></div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>📋 Existing Users</h2>
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="number" id="totalUsers">-</div>
+                    <div class="label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="totalPoints">-</div>
+                    <div class="label">Total Points</div>
+                </div>
+            </div>
+            <div id="usersContainer" class="loading">Loading users...</div>
+        </div>
+    </div>
+
+    <script>
+        const CONSUMER_API = '/api/consumer';
+
+        // Load users on page load
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${CONSUMER_API}/users`);
+                if (!response.ok) throw new Error('Failed to fetch users');
+                
+                const data = await response.json();
+                displayUsers(data.users);
+                updateStats(data.totalUsers, data.totalPoints);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersContainer').innerHTML = 
+                    '<p style="color: #dc3545; text-align: center;">Failed to load users</p>';
+            }
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('usersContainer');
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">No users yet. Create your first user above!</p>';
+                return;
+            }
+
+            // Sort by points descending
+            users.sort((a, b) => b.points - a.points);
+
+            const table = `
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Points</th>
+                            <th>Transactions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td><strong>${user.userId}</strong></td>
+                                <td>${user.points}</td>
+                                <td>${user.transactionCount || 0}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        function updateStats(totalUsers, totalPoints) {
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalPoints').textContent = totalPoints.toLocaleString();
+        }
+
+        function showStatus(message, isSuccess) {
+            const statusDiv = document.getElementById('createStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${isSuccess ? 'success' : 'error'}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submission
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value.trim();
+            const initialPoints = parseInt(document.getElementById('initialPoints').value) || 0;
+            const createBtn = document.getElementById('createBtn');
+            
+            if (!userId) {
+                showStatus('Please enter a user ID', false);
+                return;
+            }
+
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creating...';
+
+            try {
+                const response = await fetch(`${CONSUMER_API}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        initialPoints
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to create user');
+                }
+
+                showStatus(`✅ User "${userId}" created successfully with ${initialPoints} points!`, true);
+                
+                // Clear form
+                document.getElementById('userId').value = '';
+                document.getElementById('initialPoints').value = '';
+                
+                // Reload users list
+                await loadUsers();
+                
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showStatus(`❌ ${error.message}`, false);
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = 'Create User';
+            }
+        });
+
+        // Load users on page load
+        loadUsers();
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadUsers, 10000);
+    </script>
+</body>
+</html>
