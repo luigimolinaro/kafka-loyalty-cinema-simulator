@@ -44,7 +44,6 @@ Browser (Simulator) → Backend API → Kafka → Consumer Service → Redis
 
 ```bash
 # Clone and deploy
-cd /Users/lmolinaro/owldev/kafka-workshop
 ./deploy.sh
 ```
 
