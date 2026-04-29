@@ -29,6 +29,10 @@ spec:
           value: "points-events"
         - name: COLLECTION_POINT
           value: "Cinema Backend API"
+        - name: REDIS_HOST
+          value: "redis.kafka.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
         resources:
           requests:
             memory: "128Mi"

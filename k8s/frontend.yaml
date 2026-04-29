@@ -17,11 +17,16 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: points-frontend:latest
+        image: nginx:alpine
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
           name: http
+        volumeMounts:
+        - name: html-files
+          mountPath: /usr/share/nginx/html
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
         resources:
           requests:
             memory: "64Mi"
@@ -29,6 +34,13 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "100m"
+      volumes:
+      - name: html-files
+        configMap:
+          name: frontend-html
+      - name: nginx-config
+        configMap:
+          name: frontend-nginx-conf
 ---
 apiVersion: v1
 kind: Service

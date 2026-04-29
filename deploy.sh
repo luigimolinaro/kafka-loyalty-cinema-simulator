@@ -76,26 +76,45 @@ echo ""
 echo "🔨 Building Docker images..."
 echo ""
 
+echo "  📦 Building backend-api..."
+cd backend-api
+docker build -t backend-api:latest . > /dev/null 2>&1 || {
+    echo -e "${RED}❌ Failed to build backend-api${NC}"
+    exit 1
+}
+cd ..
+echo -e "${GREEN}  ✅ backend-api built${NC}"
+
 echo "  📦 Building consumer-service..."
 cd consumer-service
-docker build -t consumer-service:latest . > /dev/null 2>&1 || {
+docker build -t points-consumer-service:latest . > /dev/null 2>&1 || {
     echo -e "${RED}❌ Failed to build consumer-service${NC}"
     exit 1
 }
 cd ..
 echo -e "${GREEN}  ✅ consumer-service built${NC}"
 
-echo "  📦 Building frontend..."
-cd frontend
-docker build -t points-frontend:latest . > /dev/null 2>&1 || {
-    echo -e "${RED}❌ Failed to build frontend${NC}"
+echo "  📦 Creating frontend ConfigMaps..."
+kubectl create configmap frontend-html -n kafka \
+    --from-file=frontend/index.html \
+    --from-file=frontend/dashboard.html \
+    --from-file=frontend/simulate.html \
+    --from-file=frontend/users.html \
+    --dry-run=client -o yaml | kubectl apply -f - > /dev/null 2>&1 || {
+    echo -e "${RED}❌ Failed to create frontend-html ConfigMap${NC}"
     exit 1
 }
-cd ..
-echo -e "${GREEN}  ✅ frontend built${NC}"
+
+kubectl create configmap frontend-nginx-conf -n kafka \
+    --from-file=frontend/nginx.conf \
+    --dry-run=client -o yaml | kubectl apply -f - > /dev/null 2>&1 || {
+    echo -e "${RED}❌ Failed to create frontend-nginx-conf ConfigMap${NC}"
+    exit 1
+}
+echo -e "${GREEN}  ✅ Frontend ConfigMaps created${NC}"
 
 echo ""
-echo -e "${GREEN}✅ All images built${NC}"
+echo -e "${GREEN}✅ All images built and ConfigMaps created${NC}"
 echo ""
 
 # Load images to cluster
@@ -104,23 +123,23 @@ echo "📦 Loading images to cluster..."
 case $CLUSTER_TYPE in
     "kind")
         echo "  Loading to kind cluster..."
-        kind load docker-image consumer-service:latest --name $CLUSTER_NAME || {
-            echo -e "${RED}❌ Failed to load consumer-service to kind${NC}"
+        kind load docker-image backend-api:latest --name $CLUSTER_NAME || {
+            echo -e "${RED}❌ Failed to load backend-api to kind${NC}"
             exit 1
         }
-        kind load docker-image points-frontend:latest --name $CLUSTER_NAME || {
-            echo -e "${RED}❌ Failed to load frontend to kind${NC}"
+        kind load docker-image points-consumer-service:latest --name $CLUSTER_NAME || {
+            echo -e "${RED}❌ Failed to load consumer-service to kind${NC}"
             exit 1
         }
         ;;
     "k3s")
         echo "  Loading to k3s..."
-        docker save consumer-service:latest | sudo k3s ctr images import - || {
-            echo -e "${RED}❌ Failed to load consumer-service to k3s${NC}"
+        docker save backend-api:latest | sudo k3s ctr images import - || {
+            echo -e "${RED}❌ Failed to load backend-api to k3s${NC}"
             exit 1
         }
-        docker save points-frontend:latest | sudo k3s ctr images import - || {
-            echo -e "${RED}❌ Failed to load frontend to k3s${NC}"
+        docker save points-consumer-service:latest | sudo k3s ctr images import - || {
+            echo -e "${RED}❌ Failed to load consumer-service to k3s${NC}"
             exit 1
         }
         ;;
@@ -139,8 +158,20 @@ echo ""
 echo "🚢 Deploying services..."
 echo ""
 
+echo "  Deploying Redis..."
+kubectl apply -f k8s/redis.yaml || {
+    echo -e "${RED}❌ Failed to deploy Redis${NC}"
+    exit 1
+}
+
+echo "  Deploying backend-api..."
+kubectl apply -f k8s/backend-api.yaml || {
+    echo -e "${RED}❌ Failed to deploy backend-api${NC}"
+    exit 1
+}
+
 echo "  Deploying consumer-service..."
-kubectl apply -f consumer-service/k8s-deployment.yaml || {
+kubectl apply -f k8s/consumer-service.yaml || {
     echo -e "${RED}❌ Failed to deploy consumer-service${NC}"
     exit 1
 }
@@ -153,6 +184,22 @@ kubectl apply -f k8s/frontend.yaml || {
 
 echo ""
 echo "⏳ Waiting for pods to be ready..."
+
+# Wait for Redis
+kubectl wait --for=condition=ready pod -l app=redis -n kafka --timeout=120s || {
+    echo -e "${RED}❌ redis pod failed to become ready${NC}"
+    echo "Check logs with: kubectl logs -n kafka -l app=redis"
+    exit 1
+}
+echo -e "${GREEN}  ✅ redis ready${NC}"
+
+# Wait for backend-api
+kubectl wait --for=condition=ready pod -l app=backend-api -n kafka --timeout=120s || {
+    echo -e "${RED}❌ backend-api pod failed to become ready${NC}"
+    echo "Check logs with: kubectl logs -n kafka -l app=backend-api"
+    exit 1
+}
+echo -e "${GREEN}  ✅ backend-api ready${NC}"
 
 # Wait for consumer-service
 kubectl wait --for=condition=ready pod -l app=consumer-service -n kafka --timeout=120s || {
@@ -177,7 +224,7 @@ echo ""
 # Show status
 echo "📊 Deployment Status:"
 echo "===================="
-kubectl get pods -n kafka | grep -E "consumer-service|frontend|kafka-cluster"
+kubectl get pods -n kafka | grep -E "redis|backend-api|consumer-service|frontend|kafka-cluster"
 echo ""
 
 # Show access info
@@ -203,8 +250,10 @@ echo "  Users:           http://localhost:3001/api/users"
 echo "  Stats:           http://localhost:3001/api/stats"
 echo ""
 echo -e "${BLUE}View Logs:${NC}"
+echo "  Backend API:     kubectl logs -n kafka -l app=backend-api -f"
 echo "  Consumer:        kubectl logs -n kafka -l app=consumer-service -f"
 echo "  Frontend:        kubectl logs -n kafka -l app=frontend -f"
+echo "  Redis:           kubectl logs -n kafka -l app=redis -f"
 echo "  Kafka:           kubectl logs -n kafka kafka-cluster-broker-0 -f"
 echo ""
 

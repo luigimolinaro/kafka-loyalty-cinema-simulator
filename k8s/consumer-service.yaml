@@ -31,6 +31,10 @@ spec:
           value: "points-processor"
         - name: HTTP_PORT
           value: "3001"
+        - name: REDIS_HOST
+          value: "redis.kafka.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
         resources:
           requests:
             memory: "128Mi"

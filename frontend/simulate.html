@@ -379,7 +379,7 @@
                 <form id="cinema1-form">
                     <div class="form-group">
                         <label for="cinema1-customer">Customer ID</label>
-                        <input type="text" id="cinema1-customer" placeholder="Search or create user..." required autocomplete="off" list="cinema1-users">
+                        <input type="text" id="cinema1-customer" placeholder="Enter user ID..." required autocomplete="off" list="cinema1-users">
                         <datalist id="cinema1-users"></datalist>
                         <div id="cinema1-user-info" style="margin-top: 8px; padding: 8px; background: #e3f2fd; border-radius: 5px; display: none;">
                             <small><strong>Current Balance:</strong> <span id="cinema1-balance">0</span> points</small>
@@ -450,7 +450,7 @@
                 <form id="cinema2-form">
                     <div class="form-group">
                         <label for="cinema2-customer">Customer ID</label>
-                        <input type="text" id="cinema2-customer" placeholder="Search or create user..." required autocomplete="off" list="cinema2-users">
+                        <input type="text" id="cinema2-customer" placeholder="Enter user ID..." required autocomplete="off" list="cinema2-users">
                         <datalist id="cinema2-users"></datalist>
                         <div id="cinema2-user-info" style="margin-top: 8px; padding: 8px; background: #e3f2fd; border-radius: 5px; display: none;">
                             <small><strong>Current Balance:</strong> <span id="cinema2-balance">0</span> points</small>
@@ -569,6 +569,49 @@
         }
 
         const userDB = new UserDatabase();
+
+        // Fetch users from backend API and sync with local database
+        async function syncUsersFromBackend() {
+            try {
+                const response = await fetch('/api/consumer/users');
+                if (!response.ok) {
+                    console.error('Failed to fetch users from backend');
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Synced users from backend:', data.users);
+                
+                // Update local database with backend users
+                data.users.forEach(user => {
+                    if (!userDB.users[user.userId]) {
+                        userDB.users[user.userId] = {
+                            userId: user.userId,
+                            balance: user.points,
+                            transactions: [],
+                            createdAt: new Date().toISOString()
+                        };
+                    } else {
+                        // Update balance from backend
+                        userDB.users[user.userId].balance = user.points;
+                    }
+                });
+                userDB.saveUsers();
+                
+                // Update all user suggestions
+                ['cinema1', 'cinema2'].forEach(cinema => {
+                    updateUserSuggestions(cinema);
+                });
+            } catch (error) {
+                console.error('Error syncing users from backend:', error);
+            }
+        }
+
+        // Sync users on page load
+        syncUsersFromBackend();
+        
+        // Sync users every 10 seconds
+        setInterval(syncUsersFromBackend, 10000);
 
         // Update user suggestions when typing
         function updateUserSuggestions(cinema) {
