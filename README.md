@@ -2,6 +2,9 @@
 
 A complete event-driven application demonstrating microservices architecture with Apache Kafka, Redis database, and real-time event processing for managing customer loyalty points across cinema locations.
 
+<img width="1283" height="712" alt="image" src="https://github.com/user-attachments/assets/9dd4667b-8899-48eb-8eef-3cd9549d4f24" />
+
+
 ## 🎯 Overview
 
 This workshop implements a cinema points collection system with:
